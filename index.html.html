@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Trắc Nghiệm Đúng/Sai - KHTN: Hợp Kim & Kim Loại</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tải Font Inter hỗ trợ tiếng Việt mượt mà -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Tùy chỉnh thanh cuộn và hiệu ứng mượt */
+        html {
+            scroll-behavior: smooth;
+        }
+        .chemical sub {
+            font-size: 0.72em;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline;
+            bottom: -0.22em;
+            font-weight: 600;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+        /* Trạng thái nút chọn Đúng / Sai */
+        .option-btn {
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Thanh tiêu đề cố định phía trên -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md shrink-0">
+                    <!-- Icon Ống nghiệm / Khoa học -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">KIỂM TRA KHOA HỌC TỰ NHIÊN</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Chủ đề: Hợp kim của sắt, nhôm và kim loại trong đời sống</p>
+                </div>
+            </div>
+
+            <!-- Khu vực hiển thị tiến độ & đồng hồ khi đang làm bài -->
+            <div id="header-status" class="hidden items-center gap-2 sm:gap-3">
+                <div class="bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Đã chọn: <strong id="answered-count" class="text-blue-600">0</strong>/32</span>
+                </div>
+                <div id="timer-box" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 tabular-nums">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="timer-display">00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hộp thông báo Toast thay thế hoàn toàn alert() -->
+    <div id="toast-container" class="fixed bottom-5 right-5 left-5 sm:left-auto z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Modal xác nhận nộp bài tùy chỉnh (không dùng confirm()) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-center text-slate-900 mb-2">Xác nhận nộp bài?</h3>
+            <p id="modal-message" class="text-sm text-slate-600 text-center mb-6 leading-relaxed">
+                Bạn vẫn còn một số ý chưa chọn đáp án. Bạn có chắc chắn muốn nộp bài ngay bây giờ không?
+            </p>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="modal-cancel-btn" class="px-4 py-3 rounded-xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    Kiểm tra lại
+                </button>
+                <button type="button" id="modal-confirm-btn" class="px-4 py-3 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition">
+                    Nộp bài ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6 sm:py-8">
+
+        <!-- MÀN HÌNH 1: NHẬP THÔNG TIN HỌC SINH -->
+        <section id="start-screen" class="max-w-xl mx-auto bg-white rounded-3xl shadow-lg shadow-slate-200/60 border border-slate-200/80 overflow-hidden animate-fade-in">
+            <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-8 text-white text-center relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10"></div>
+                <div class="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-white/10"></div>
+                <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-semibold tracking-wider uppercase mb-3">
+                    Phiếu Học Tập Trực Tuyến • KHTN
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+                    Hợp Kim &amp; Kim Loại Trong Đời Sống
+                </h2>
+                <p class="text-blue-100 text-sm max-w-md mx-auto">
+                    Bài kiểm tra trắc nghiệm Đúng / Sai gồm <strong>8 câu hỏi</strong> (32 phát biểu). Điểm tính theo chuẩn thang điểm 10 mới.
+                </p>
+            </div>
+
+            <form id="student-form" class="p-6 sm:p-8 space-y-5">
+                <div>
+                    <label for="student-name" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        Họ và tên học sinh <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="student-name" required placeholder="Ví dụ: Nguyễn Văn An"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="student-class" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                            Lớp <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="student-class" required placeholder="Ví dụ: 9A1"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base uppercase">
+                    </div>
+
+                    <div>
+                        <label for="timer-mode" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                            Chế độ thời gian
+                        </label>
+                        <select id="timer-mode"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base">
+                            <option value="countdown">Đếm ngược 15 phút (Thi thử)</option>
+                            <option value="countup">Đếm xuôi thời gian (Tự luyện)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hướng dẫn cách tính điểm -->
+                <div class="bg-blue-50/80 border border-blue-100 rounded-2xl p-4 text-xs sm:text-sm text-slate-700 space-y-1.5">
+                    <div class="font-bold text-blue-800 flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Quy tắc làm bài &amp; Tính điểm chuẩn:
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600 pl-1">
+                        <li>Mỗi câu có 4 ý (<strong>a, b, c, d</strong>). Với mỗi ý, em chọn <strong>Đúng (Đ)</strong> hoặc <strong>Sai (S)</strong>.</li>
+                        <li>Mỗi câu tối đa <strong>1,25 điểm</strong> (8 câu = 10 điểm): Đúng 1 ý được 0,125đ; đúng 2 ý được 0,3125đ; đúng 3 ý được 0,625đ; đúng cả 4 ý được trọn vẹn 1,25đ.</li>
+                    </ul>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-base shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+                    <span>Bắt đầu làm bài</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </form>
+        </section>
+
+        <!-- MÀN HÌNH 2: LÀM BÀI TRẮC NGHIỆM -->
+        <section id="quiz-screen" class="hidden space-y-6 animate-fade-in">
+            <!-- Thông tin thí sinh tóm tắt -->
+            <div class="bg-white rounded-2xl p-4 sm:px-6 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm" id="avatar-initials">
+                        HS
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">Thí sinh dự thi</div>
+                        <div class="font-bold text-slate-900 text-sm sm:text-base">
+                            <span id="display-name">Nguyễn Văn An</span>
+                            <span class="mx-1.5 text-slate-300">•</span>
+                            <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold" id="display-class">9A1</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-500">
+                    Chọn <span class="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Đ</span> nếu đúng hoặc <span class="inline-block px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">S</span> nếu sai
+                </div>
+            </div>
+
+            <!-- Danh sách 8 câu hỏi được render bằng JS -->
+            <div id="questions-container" class="space-y-6"></div>
+
+            <!-- Thanh điều hướng & Nút nộp bài dưới cùng -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-slate-600 text-center sm:text-left">
+                    Hãy kiểm tra kỹ tất cả <strong>8 câu hỏi (32 phát biểu)</strong> trước khi nhấn nộp bài.
+                </div>
+                <button type="button" id="submit-quiz-btn"
+                    class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition transform active:scale-[0.98]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Nộp bài &amp; Xem điểm</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- MÀN HÌNH 3: BẢNG KẾT QUẢ & ĐÁP ÁN CHI TIẾT -->
+        <section id="result-screen" class="hidden space-y-6 animate-fade-in">
+            <!-- Thẻ tổng hợp điểm số -->
+            <div class="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-600 p-6 sm:p-8 text-white text-center">
+                    <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-semibold uppercase tracking-wider mb-2">
+                        Phiếu Kết Quả Bài Làm
+                    </span>
+                    <h2 id="res-student-title" class="text-xl sm:text-2xl font-extrabold mb-1">
+                        Nguyễn Văn An - Lớp 9A1
+                    </h2>
+                    <p id="res-feedback-badge" class="text-blue-100 text-sm font-medium">
+                        Hoàn thành xuất sắc bài kiểm tra!
+                    </p>
+                </div>
+
+                <div class="p-6 sm:p-8">
+                    <!-- 3 chỉ số chính -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
+                            <div class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Điểm hệ 10</div>
+                            <div id="res-score" class="text-3xl sm:text-4xl font-extrabold text-blue-700">10,00</div>
+                            <div class="text-xs text-slate-500 mt-1">Thang điểm chuẩn Bộ GD&amp;ĐT</div>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
+                            <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-1">Số phát biểu đúng</div>
+                            <div class="text-3xl sm:text-4xl font-extrabold text-emerald-700">
+                                <span id="res-correct-items">32</span><span class="text-lg text-emerald-500 font-bold">/32</span>
+                            </div>
+                            <div id="res-full-questions" class="text-xs text-slate-500 mt-1">Đúng trọn vẹn 8/8 câu</div>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-center">
+                            <div class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Thời gian làm bài</div>
+                            <div id="res-time" class="text-3xl sm:text-4xl font-extrabold text-amber-700 tabular-nums">04:25</div>
+                            <div id="res-timestamp" class="text-xs text-slate-500 mt-1">Nộp lúc 20:15</div>
+                        </div>
+                    </div>
+
+                    <!-- Các nút hành động: Sao chép gửi GV, Tải phiếu kết quả, Làm lại -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 border-t border-slate-100">
+                        <button type="button" id="copy-result-btn"
+                            class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            <span>Sao chép kết quả gửi giáo viên</span>
+                        </button>
+
+                        <button type="button" id="download-result-btn"
+                            class="px-5 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-sm flex items-center justify-center gap-2 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span>Tải phiếu kết quả (.txt)</span>
+                        </button>
+
+                        <button type="button" id="retry-quiz-btn"
+                            class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>Làm lại bài</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tiêu đề phần chữa bài chi tiết -->
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-lg font-bold text-slate-900">Chi tiết bài làm &amp; Giải thích đáp án</h3>
+                <div class="flex items-center gap-3 text-xs font-medium">
+                    <span class="flex items-center gap-1 text-emerald-700"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Chọn đúng</span>
+                    <span class="flex items-center gap-1 text-rose-700"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Chọn sai / Bỏ trống</span>
+                </div>
+            </div>
+
+            <!-- Danh sách chữa chi tiết 8 câu -->
+            <div id="review-container" class="space-y-6"></div>
+        </section>
+
+    </main>
+
+    <!-- Chân trang -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+        Hệ thống Trắc nghiệm Trực tuyến Khoa học Tự nhiên THCS • Tự động chấm điểm &amp; Giải thích chi tiết
+    </footer>
+
+    <!-- JAVASCRIPT XỬ LÝ TOÀN BỘ LOGIC -->
+    <script>
+        /**
+         * DỮ LIỆU ĐỀ THI TRẮC NGHIỆM ĐÚNG/SAI (8 CÂU - 32 Ý)
+         * Các công thức hóa học được định dạng bằng thẻ <sub> để hiển thị chuẩn xác.
+         */
+        const QUIZ_DATA = [
+            {
+                id: 1,
+                stem: "Câu 1. Gang và thép là hợp kim của sắt (iron) trong đó sắt (iron) chiếm chủ yếu và có nhiều ứng dụng trong đời sống.",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Hợp kim gang Fe – C (2 – 5% khối lượng) và một số nguyên tố khác, ít bị ăn mòn hơn sắt (iron).",
+                        answer: true,
+                        explanation: "Đúng. Gang là hợp kim của sắt với carbon (chiếm 2 – 5% khối lượng) cùng một lượng nhỏ Si, Mn, P, S..., có tính cứng và ít bị ăn mòn hơn sắt nguyên chất."
+                    },
+                    {
+                        key: "b",
+                        text: "Gang dùng làm đường ống, phụ kiện đường ống dẫn nước cấp, nồi và chảo, khuôn đúc, …",
+                        answer: true,
+                        explanation: "Đúng. Nhờ tính đúc tốt và chịu nén cao, gang được ứng dụng rộng rãi làm ống dẫn nước, nắp cống, nồi chảo gang, bệ máy và khuôn đúc."
+                    },
+                    {
+                        key: "c",
+                        text: "Thép (thép thông thường) Fe – C (< 5% khối lượng) và một số nguyên tố khác, cứng, dẻo hơn gang, làm khung của công trình xây dựng, thiết bị, máy móc.",
+                        answer: true,
+                        explanation: "Đúng. Theo nội dung bài học, thép thông thường có hàm lượng carbon thấp hơn gang, có tính cứng, đàn hồi và dẻo hơn gang nên dùng làm kết cấu xây dựng, chế tạo máy."
+                    },
+                    {
+                        key: "d",
+                        text: "Hợp kim Inox (thép đặc biệt) (Fe – Cr – Ni) khó bị gỉ, cứng và giòn làm đồ dùng, dụng cụ trong gia đình; chi tiết trong các dụng cụ, thiết bị y tế …",
+                        answer: false,
+                        explanation: "Sai. Inox (thép không gỉ Fe – Cr – Ni) có đặc tính dẻo dai, bền và chịu lực tốt chứ không giòn."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                stem: "Câu 2. Quặng bauxite dùng để sản xuất nhôm (aluminium) và hợp kim Đuy-ra (duralumin) có nhiều ứng dụng trong cuộc sống.",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Hợp kim Đuy-ra (duralumin) Al – Cu – Mg nhẹ, cứng và bền.",
+                        answer: true,
+                        explanation: "Đúng. Đuy-ra là hợp kim chủ yếu của nhôm với đồng (Cu), magnesium (Mg) và một số nguyên tố khác, có ưu điểm nhẹ như nhôm nhưng cứng và bền hơn nhôm rất nhiều."
+                    },
+                    {
+                        key: "b",
+                        text: "Quặng bauxite có thành phần chính là Fe<sub>2</sub>O<sub>3</sub>.",
+                        answer: false,
+                        explanation: "Sai. Quặng bauxite có thành phần chính là aluminium oxide ngậm nước (Al<sub>2</sub>O<sub>3</sub>·nH<sub>2</sub>O), còn Fe<sub>2</sub>O<sub>3</sub> là thành phần chính của quặng hematite."
+                    },
+                    {
+                        key: "c",
+                        text: "Hợp kim Đuy-ra (duralumin) dùng chế tạo vỏ máy bay, ô tô, khung xe đạp, …",
+                        answer: true,
+                        explanation: "Đúng. Nhờ đặc tính nhẹ và bền chắc, Đuy-ra là vật liệu quan trọng trong ngành hàng không (vỏ máy bay, tên lửa) và giao thông (ô tô, khung xe đạp)."
+                    },
+                    {
+                        key: "d",
+                        text: "Dùng cryolite (Na<sub>3</sub>AlF<sub>6</sub>) với công dụng chính để hạ nhiệt độ nóng chảy của Al<sub>2</sub>O<sub>3</sub>.",
+                        answer: true,
+                        explanation: "Đúng. Cryolite giúp hạ nhiệt độ nóng chảy của Al<sub>2</sub>O<sub>3</sub> từ khoảng 2050 °C xuống còn khoảng 900 °C, giúp tiết kiệm năng lượng, tăng độ dẫn điện và bảo vệ nhôm nóng chảy."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                stem: "Câu 3. Các loại quặng kim loại dùng để sản xuất một số kim loại và hợp kim của chúng.",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Quặng hematite có thành phần chính là Fe<sub>2</sub>O<sub>3</sub> dùng để sản xuất gang.",
+                        answer: true,
+                        explanation: "Đúng. Quặng hematite đỏ chứa hàm lượng Fe<sub>2</sub>O<sub>3</sub> cao, là nguồn nguyên liệu phổ biến nhất để luyện gang trong lò cao."
+                    },
+                    {
+                        key: "b",
+                        text: "Quặng sphalerite có thành phần chính là ZnS dùng để sản xuất Zn.",
+                        answer: true,
+                        explanation: "Đúng. Quặng sphalerite chứa thành phần chính là zinc sulfide (ZnS), là quặng quan trọng nhất để sản xuất kim loại kẽm (Zn)."
+                    },
+                    {
+                        key: "c",
+                        text: "Quặng bauxite có thành phần chính là Fe<sub>2</sub>O<sub>3</sub>.",
+                        answer: false,
+                        explanation: "Sai. Quặng bauxite có thành phần chính là Al<sub>2</sub>O<sub>3</sub> dùng để sản xuất nhôm (Al)."
+                    },
+                    {
+                        key: "d",
+                        text: "Dùng H<sub>2</sub> để tách Fe ra khỏi Fe<sub>2</sub>O<sub>3</sub> có trong quặng hematite.",
+                        answer: true,
+                        explanation: "Đúng. Khí H<sub>2</sub> là chất khử mạnh ở nhiệt độ cao, có thể khử Fe<sub>2</sub>O<sub>3</sub> thành kim loại Fe (Fe<sub>2</sub>O<sub>3</sub> + 3H<sub>2</sub> → 2Fe + 3H<sub>2</sub>O)."
+                    }
+                ]
+            },
+            {
+                id: 4,
+                stem: "Câu 4. Để sản xuất kim loại và hợp kim từ các quặng, người ta phải dùng các biện pháp phù hợp.",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Dùng phương pháp điện phân nóng chảy để tách Al ra khỏi Al<sub>2</sub>O<sub>3</sub>.",
+                        answer: true,
+                        explanation: "Đúng. Nhôm là kim loại hoạt động hóa học mạnh nên phải điều chế bằng phương pháp điện phân nóng chảy Al<sub>2</sub>O<sub>3</sub> (có mặt cryolite)."
+                    },
+                    {
+                        key: "b",
+                        text: "Dùng phương pháp nhiệt luyện để tách Fe ra khỏi Fe<sub>2</sub>O<sub>3</sub> bởi khí H<sub>2</sub>.",
+                        answer: true,
+                        explanation: "Đúng. Sắt là kim loại có mức độ hoạt động trung bình nên dùng phương pháp nhiệt luyện (dùng chất khử như CO, H<sub>2</sub>, C ở nhiệt độ cao) để khử oxide."
+                    },
+                    {
+                        key: "c",
+                        text: "Dùng phương pháp nhiệt luyện để tách Zn ra khỏi ZnS bởi khí O<sub>2</sub> và C.",
+                        answer: true,
+                        explanation: "Đúng. Đốt quặng ZnS trong khí O<sub>2</sub> thu được ZnO (2ZnS + 3O<sub>2</sub> → 2ZnO + 2SO<sub>2</sub>), sau đó khử ZnO bằng carbon (C) ở nhiệt độ cao thu được Zn."
+                    },
+                    {
+                        key: "d",
+                        text: "Dùng phương pháp thủy luyện để tách Cu ra khỏi CuSO<sub>4</sub> bởi Fe.",
+                        answer: true,
+                        explanation: "Đúng. Cho sắt (Fe) tác dụng với dung dịch muối đồng(II) sulfate (CuSO<sub>4</sub>), sắt đẩy đồng ra khỏi dung dịch muối: Fe + CuSO<sub>4</sub> → FeSO<sub>4</sub> + Cu."
+                    }
+                ]
+            },
+            {
+                id: 5,
+                stem: "Câu 5. Quá trình luyện gang và thép có một số đặc điểm như sau:",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Chất xỉ tạo ra cả trong quá trình luyện gang và thép là CaCO<sub>3</sub>.",
+                        answer: false,
+                        explanation: "Sai. CaCO<sub>3</sub> là chất trợ dung ban đầu; khi nung nóng tạo ra CaO, sau đó CaO kết hợp với tạp chất SiO<sub>2</sub> tạo thành xỉ calcium silicate (CaSiO<sub>3</sub>)."
+                    },
+                    {
+                        key: "b",
+                        text: "Nguyên liệu sản xuất thép là gang (hoặc thép phế liệu) và khí oxygen.",
+                        answer: true,
+                        explanation: "Đúng. Luyện thép sử dụng nguyên liệu chính là gang trắng/gang xám, thép phế liệu và thổi khí oxygen để giảm hàm lượng carbon cùng các tạp chất."
+                    },
+                    {
+                        key: "c",
+                        text: "Nguyên liệu sản xuất gang là quặng bauxite, than cốc, chất tạo xỉ: CaCO<sub>3</sub>, SiO<sub>2</sub>,...",
+                        answer: false,
+                        explanation: "Sai. Nguyên liệu sản xuất gang phải là quặng sắt (như hematite Fe<sub>2</sub>O<sub>3</sub>, magnetite Fe<sub>3</sub>O<sub>4</sub>), không phải quặng bauxite (quặng nhôm)."
+                    },
+                    {
+                        key: "d",
+                        text: "Khi luyện thép thì oxygen oxi hóa các tạp chất trong gang thì oxide dạng khí (CO<sub>2</sub>, SO<sub>2</sub>,..) thoát ra theo khí thải; oxide dạng rắn (SiO<sub>2</sub>, MnO<sub>2</sub>,..) sẽ tạo xỉ nhẹ, nổi lên trên thép lỏng và được tách ra để thu lấy thép.",
+                        answer: true,
+                        explanation: "Đúng. Đây chính là nguyên tắc hóa học cơ bản của quá trình luyện gang thành thép."
+                    }
+                ]
+            },
+            {
+                id: 6,
+                stem: "Câu 6. Kim loại có độ dẫn điện, dẫn nhiệt tốt,… nên được ứng dụng nhiều trong thực tế. Tuy nhiên, nhiều thiết bị, đồ dùng phục vụ cho đời sống và sản xuất được làm từ hợp kim (ví dụ: Hợp kim đồng, Hợp kim kẽm). Hãy chọn phát biểu đúng, sai trong các phát biểu sau:",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Trong thành phần của hợp kim nhất thiết phải có thành phần là kim loại.",
+                        answer: true,
+                        explanation: "Đúng. Hợp kim là vật liệu kim loại có chứa một kim loại cơ bản và một số kim loại hoặc phi kim khác."
+                    },
+                    {
+                        key: "b",
+                        text: "Hợp kim có nhiều tính chất hóa học khác hẳn tính chất hóa học của các đơn chất thành phần.",
+                        answer: false,
+                        explanation: "Sai. Tính chất hóa học của hợp kim tương tự tính chất hóa học của các đơn chất thành phần; chúng chỉ khác biệt rõ rệt về tính chất vật lí và cơ học."
+                    },
+                    {
+                        key: "c",
+                        text: "Gang là hợp kim của iron và carbon, trong đó carbon chiếm khoảng 0,01 – 2% về khối lượng.",
+                        answer: false,
+                        explanation: "Sai. Gang chứa từ 2 – 5% khối lượng carbon; còn hàm lượng dưới 2% (0,01 – 2%) là thành phần của thép."
+                    },
+                    {
+                        key: "d",
+                        text: "Hợp kim thường cứng hơn các đơn chất thành phần.",
+                        answer: true,
+                        explanation: "Đúng. Do sự thay đổi cấu trúc mạng tinh thể khi có thêm nguyên tử nguyên tố khác, hợp kim thường cứng và bền hơn kim loại nguyên chất."
+                    }
+                ]
+            },
+            {
+                id: 7,
+                stem: "Câu 7. Hãy cho biết các phát biểu sau đúng hay sai?",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Thép là hợp kim của iron chứa từ 2 – 5% khối lượng carbon.",
+                        answer: false,
+                        explanation: "Sai. Thép chứa hàm lượng carbon nhỏ hơn 2% về khối lượng (từ 2 – 5% là gang)."
+                    },
+                    {
+                        key: "b",
+                        text: "Hợp kim có nhiều tính chất hóa học tương tự kim loại thành phần.",
+                        answer: true,
+                        explanation: "Đúng. Vì trong hợp kim vẫn giữ liên kết kim loại và các nguyên tử kim loại thành phần nên tính chất hóa học cơ bản vẫn tương tự các đơn chất tạo nên nó."
+                    },
+                    {
+                        key: "c",
+                        text: "Hợp kim aluminium (duralumin) dùng làm vật liệu chế tạo máy bay, ô tô, tên lửa,…",
+                        answer: true,
+                        explanation: "Đúng. Hợp kim nhôm duralumin siêu nhẹ, chịu lực tốt nên được ứng dụng trong công nghệ hàng không vũ trụ và chế tạo phương tiện giao thông."
+                    },
+                    {
+                        key: "d",
+                        text: "Inox là hợp kim của aluminium.",
+                        answer: false,
+                        explanation: "Sai. Inox (thép không gỉ) là hợp kim của sắt (iron) với chromium (Cr), nickel (Ni) và một lượng nhỏ carbon."
+                    }
+                ]
+            },
+            {
+                id: 8,
+                stem: "Câu 8. Hãy tìm các phát biểu đúng, sai trong các phát biểu sau:",
+                statements: [
+                    {
+                        key: "a",
+                        text: "Gang và thép là hai loại hợp kim của kim loại iron.",
+                        answer: true,
+                        explanation: "Đúng. Cả gang và thép đều có kim loại cơ bản là sắt (iron) kết hợp với carbon và một số nguyên tố khác."
+                    },
+                    {
+                        key: "b",
+                        text: "Inox hay còn gọi là thép không gỉ là hợp kim của iron với carbon, chromium, nickel,…",
+                        answer: true,
+                        explanation: "Đúng. Inox là thép đặc biệt chứa sắt, carbon cùng chromium (tạo lớp màng oxide bảo vệ chống gỉ) và nickel (tăng độ bền dẻo)."
+                    },
+                    {
+                        key: "c",
+                        text: "Hợp kim có tính dẫn điện tốt hơn kim loại thành phần.",
+                        answer: false,
+                        explanation: "Sai. Hợp kim thường có tính dẫn điện và dẫn nhiệt kém hơn so với các kim loại nguyên chất thành phần."
+                    },
+                    {
+                        key: "d",
+                        text: "Hàm lượng carbon trong gang cao hơn trong thép.",
+                        answer: true,
+                        explanation: "Đúng. Gang chứa 2 – 5% carbon, cao hơn hẳn so với thép (chứa dưới 2% carbon)."
+                    }
+                ]
+            }
+        ];
+
+        // BIẾN QUẢN LÝ TRẠNG THÁI ỨNG DỤNG
+        let studentInfo = {
+            name: "",
+            className: "",
+            timerMode: "countdown" // 'countdown' (15 phút = 900s) hoặc 'countup'
+        };
+
+        // Lưu lựa chọn của học sinh: key dạng "qId_stmtKey" (ví dụ: "1_a": true / false)
+        let userAnswers = {};
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+        const COUNTDOWN_LIMIT = 15 * 60; // 15 phút
+        let isSubmitted = false;
+
+        // CÁC PHẦN TỬ DOM
+        const startScreen = document.getElementById("start-screen");
+        const quizScreen = document.getElementById("quiz-screen");
+        const resultScreen = document.getElementById("result-screen");
+        const headerStatus = document.getElementById("header-status");
+        const answeredCountEl = document.getElementById("answered-count");
+        const timerDisplayEl = document.getElementById("timer-display");
+        const timerBoxEl = document.getElementById("timer-box");
+
+        const studentForm = document.getElementById("student-form");
+        const questionsContainer = document.getElementById("questions-container");
+        const reviewContainer = document.getElementById("review-container");
+
+        const confirmModal = document.getElementById("confirm-modal");
+        const modalCancelBtn = document.getElementById("modal-cancel-btn");
+        const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+
+        /**
+         * Hiển thị thông báo Toast nhỏ gọn (thay thế hoàn toàn alert())
+         */
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+
+            const colors = {
+                info: "bg-slate-800 text-white border-slate-700",
+                success: "bg-emerald-600 text-white border-emerald-500",
+                warning: "bg-amber-600 text-white border-amber-500",
+                error: "bg-rose-600 text-white border-rose-500"
+            };
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-xl border text-sm font-medium flex items-center gap-2.5 animate-fade-in ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.transform = "translateY(8px)";
+                toast.style.transition = "all 0.25s ease";
+                setTimeout(() => toast.remove(), 250);
+            }, 3200);
+        }
+
+        /**
+         * Định dạng giây thành chuỗi MM:SS
+         */
+        function formatTime(totalSeconds) {
+            const safeSeconds = Math.max(0, totalSeconds);
+            const mins = Math.floor(safeSeconds / 60);
+            const secs = safeSeconds % 60;
+            return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+
+        /**
+         * Lấy chữ cái viết tắt từ tên học sinh cho Avatar
+         */
+        function getInitials(fullName) {
+            const parts = fullName.trim().split(/\s+/);
+            if (parts.length === 0) return "HS";
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        /**
+         * Bắt đầu đồng hồ đếm thời gian
+         */
+        function startTimer() {
+            clearInterval(timerInterval);
+            elapsedSeconds = 0;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                elapsedSeconds++;
+                updateTimerUI();
+
+                if (studentInfo.timerMode === "countdown") {
+                    const remaining = COUNTDOWN_LIMIT - elapsedSeconds;
+                    if (remaining === 60) {
+                        showToast("Còn 1 phút nữa là hết giờ làm bài!", "warning");
+                    }
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        showToast("Đã hết thời gian 15 phút! Hệ thống tự động nộp bài.", "warning");
+                        gradeAndShowResults();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            if (studentInfo.timerMode === "countdown") {
+                const remaining = COUNTDOWN_LIMIT - elapsedSeconds;
+                timerDisplayEl.textContent = formatTime(remaining);
+                if (remaining <= 60) {
+                    timerBoxEl.className = "bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 tabular-nums animate-pulse";
+                } else {
+                    timerBoxEl.className = "bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 tabular-nums";
+                }
+            } else {
+                timerDisplayEl.textContent = formatTime(elapsedSeconds);
+            }
+        }
+
+        /**
+         * Render danh sách 8 câu hỏi trắc nghiệm Đúng / Sai
+         */
+        function renderQuestions() {
+            questionsContainer.innerHTML = "";
+
+            QUIZ_DATA.forEach((q) => {
+                const card = document.createElement("div");
+                card.className = "bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden";
+
+                // Phần dẫn câu hỏi
+                const headerHTML = `
+                    <div class="bg-slate-50/90 border-b border-slate-200/80 px-5 py-4">
+                        <p class="font-bold text-slate-900 text-base sm:text-[17px] leading-relaxed chemical">
+                            ${q.stem}
+                        </p>
+                    </div>
+                `;
+
+                // Danh sách 4 phát biểu a, b, c, d
+                let statementsHTML = `<div class="divide-y divide-slate-100">`;
+                q.statements.forEach((stmt) => {
+                    const answerKey = `${q.id}_${stmt.key}`;
+                    const currentVal = userAnswers[answerKey]; // true, false, hoặc undefined
+
+                    const trueBtnClass = currentVal === true
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-600/25 ring-2 ring-emerald-600/20"
+                        : "bg-white text-slate-600 border-slate-300 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/60";
+
+                    const falseBtnClass = currentVal === false
+                        ? "bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-600/25 ring-2 ring-rose-600/20"
+                        : "bg-white text-slate-600 border-slate-300 hover:border-rose-500 hover:text-rose-700 hover:bg-rose-50/60";
+
+                    statementsHTML += `
+                        <div class="p-4 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 hover:bg-slate-50/60 transition">
+                            <div class="flex items-start gap-2.5 flex-1">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-blue-100/80 text-blue-800 font-bold text-xs shrink-0 mt-0.5">
+                                    ${stmt.key}
+                                </span>
+                                <span class="text-slate-800 text-sm sm:text-base leading-relaxed chemical">
+                                    ${stmt.text}
+                                </span>
+                            </div>
+
+                            <!-- 2 nút chọn Đúng (Đ) và Sai (S) -->
+                            <div class="flex items-center gap-2.5 self-end sm:self-center shrink-0 pt-1 sm:pt-0">
+                                <button type="button"
+                                    data-qid="${q.id}"
+                                    data-skey="${stmt.key}"
+                                    data-val="true"
+                                    aria-label="Chọn Đúng cho câu ${q.id} ý ${stmt.key}"
+                                    class="option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 ${trueBtnClass}">
+                                    <span>Đúng (Đ)</span>
+                                </button>
+
+                                <button type="button"
+                                    data-qid="${q.id}"
+                                    data-skey="${stmt.key}"
+                                    data-val="false"
+                                    aria-label="Chọn Sai cho câu ${q.id} ý ${stmt.key}"
+                                    class="option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 ${falseBtnClass}">
+                                    <span>Sai (S)</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                statementsHTML += `</div>`;
+
+                card.innerHTML = headerHTML + statementsHTML;
+                questionsContainer.appendChild(card);
+            });
+        }
+
+        /**
+         * Xử lý sự kiện click chọn Đúng / Sai bằng Event Delegation (nhanh & mượt trên mobile)
+         */
+        questionsContainer.addEventListener("click", (e) => {
+            if (isSubmitted) return;
+            const btn = e.target.closest(".option-btn");
+            if (!btn) return;
+
+            const qId = btn.dataset.qid;
+            const sKey = btn.dataset.skey;
+            const val = btn.dataset.val === "true";
+            const answerKey = `${qId}_${sKey}`;
+
+            // Lưu câu trả lời
+            userAnswers[answerKey] = val;
+
+            // Cập nhật giao diện trực tiếp trên hàng nút đó để không bị giật trang
+            const parentGroup = btn.parentElement;
+            const buttons = parentGroup.querySelectorAll(".option-btn");
+            buttons.forEach((b) => {
+                const bVal = b.dataset.val === "true";
+                if (bVal === val) {
+                    if (val === true) {
+                        b.className = "option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-600/25 ring-2 ring-emerald-600/20";
+                    } else {
+                        b.className = "option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-600/25 ring-2 ring-rose-600/20";
+                    }
+                } else {
+                    if (bVal === true) {
+                        b.className = "option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/60";
+                    } else {
+                        b.className = "option-btn min-w-[84px] sm:min-w-[92px] py-2.5 px-3 rounded-xl border-2 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300 hover:border-rose-500 hover:text-rose-700 hover:bg-rose-50/60";
+                    }
+                }
+            });
+
+            // Cập nhật số lượng ý đã chọn
+            const totalAnswered = Object.keys(userAnswers).length;
+            answeredCountEl.textContent = totalAnswered;
+        });
+
+        /**
+         * Bắt đầu làm bài khi submit form thông tin học sinh
+         */
+        studentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById("student-name").value.trim();
+            const classInput = document.getElementById("student-class").value.trim().toUpperCase();
+            const modeInput = document.getElementById("timer-mode").value;
+
+            if (!nameInput || !classInput) {
+                showToast("Vui lòng nhập đầy đủ Họ tên và Lớp!", "error");
+                return;
+            }
+
+            studentInfo = {
+                name: nameInput,
+                className: classInput,
+                timerMode: modeInput
+            };
+
+            // Reset dữ liệu làm bài
+            userAnswers = {};
+            isSubmitted = false;
+            answeredCountEl.textContent = "0";
+
+            // Hiển thị thông tin thí sinh
+            document.getElementById("display-name").textContent = studentInfo.name;
+            document.getElementById("display-class").textContent = `Lớp ${studentInfo.className}`;
+            document.getElementById("avatar-initials").textContent = getInitials(studentInfo.name);
+
+            // Chuyển màn hình
+            startScreen.classList.add("hidden");
+            resultScreen.classList.add("hidden");
+            quizScreen.classList.remove("hidden");
+            headerStatus.classList.remove("hidden");
+            headerStatus.classList.add("flex");
+
+            renderQuestions();
+            startTimer();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        /**
+         * Xử lý nút Nộp bài
+         */
+        document.getElementById("submit-quiz-btn").addEventListener("click", () => {
+            const totalAnswered = Object.keys(userAnswers).length;
+            const modalTitle = document.getElementById("modal-title");
+            const modalMsg = document.getElementById("modal-message");
+
+            if (totalAnswered < 32) {
+                const missing = 32 - totalAnswered;
+                modalTitle.textContent = `Còn ${missing} phát biểu chưa chọn!`;
+                modalMsg.innerHTML = `Em mới hoàn thành <strong>${totalAnswered}/32</strong> ý. Những ý bỏ trống sẽ không được tính điểm. Em có chắc chắn muốn nộp bài không?`;
+            } else {
+                modalTitle.textContent = "Xác nhận nộp bài?";
+                modalMsg.innerHTML = `Em đã hoàn thành đầy đủ <strong>32/32</strong> phát biểu. Nhấn <strong>"Nộp bài ngay"</strong> để xem điểm và lời giải chi tiết.`;
+            }
+
+            confirmModal.classList.remove("hidden");
+            confirmModal.classList.add("flex");
+        });
+
+        modalCancelBtn.addEventListener("click", () => {
+            confirmModal.classList.add("hidden");
+            confirmModal.classList.remove("flex");
+        });
+
+        modalConfirmBtn.addEventListener("click", () => {
+            confirmModal.classList.add("hidden");
+            confirmModal.classList.remove("flex");
+            gradeAndShowResults();
+        });
+
+        /**
+         * Tính điểm theo chuẩn thang điểm trắc nghiệm Đúng/Sai của Bộ GD&ĐT
+         * Mỗi câu tối đa 1.25 điểm (8 câu = 10 điểm):
+         * - Đúng 1 ý: 10% * 1.25 = 0.125 điểm
+         * - Đúng 2 ý: 25% * 1.25 = 0.3125 điểm
+         * - Đúng 3 ý: 50% * 1.25 = 0.625 điểm
+         * - Đúng 4 ý: 100% * 1.25 = 1.25 điểm
+         */
+        function calculateQuestionScore(correctCount) {
+            const maxQuestionScore = 1.25;
+            switch (correctCount) {
+                case 1: return maxQuestionScore * 0.10;
+                case 2: return maxQuestionScore * 0.25;
+                case 3: return maxQuestionScore * 0.50;
+                case 4: return maxQuestionScore * 1.00;
+                default: return 0;
+            }
+        }
+
+        let lastSummaryText = "";
+
+        /**
+         * Chấm điểm và hiển thị trang kết quả chi tiết
+         */
+        function gradeAndShowResults() {
+            isSubmitted = true;
+            clearInterval(timerInterval);
+
+            let totalScore = 0;
+            let totalCorrectItems = 0;
+            let fullCorrectQuestions = 0;
+            let detailLinesForExport = [];
+
+            reviewContainer.innerHTML = "";
+
+            QUIZ_DATA.forEach((q) => {
+                let qCorrectCount = 0;
+                let stmtExportArr = [];
+
+                let statementsReviewHTML = `<div class="divide-y divide-slate-100">`;
+
+                q.statements.forEach((stmt) => {
+                    const key = `${q.id}_${stmt.key}`;
+                    const userVal = userAnswers[key]; // true, false, hoặc undefined
+                    const isCorrect = userVal === stmt.answer;
+
+                    if (isCorrect) {
+                        qCorrectCount++;
+                        totalCorrectItems++;
+                    }
+
+                    const userLabel = userVal === undefined ? "Bỏ trống" : (userVal ? "Đúng (Đ)" : "Sai (S)");
+                    const correctLabel = stmt.answer ? "Đúng (Đ)" : "Sai (S)";
+                    stmtExportArr.push(`${stmt.key}:${userVal === undefined ? "-" : (userVal ? "Đ" : "S")}${isCorrect ? "✓" : "✗"}`);
+
+                    const rowBg = isCorrect ? "bg-emerald-50/40" : "bg-rose-50/50";
+                    const badgeIcon = isCorrect
+                        ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold">✓ Đúng</span>`
+                        : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-xs font-bold">✕ Sai</span>`;
+
+                    statementsReviewHTML += `
+                        <div class="p-4 sm:px-5 ${rowBg} space-y-2.5">
+                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                <div class="flex items-start gap-2.5">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg ${isCorrect ? 'bg-emerald-200/80 text-emerald-900' : 'bg-rose-200/80 text-rose-900'} font-bold text-xs shrink-0 mt-0.5">
+                                        ${stmt.key}
+                                    </span>
+                                    <span class="text-slate-900 text-sm sm:text-base font-medium leading-relaxed chemical">
+                                        ${stmt.text}
+                                    </span>
+                                </div>
+                                <div class="self-end sm:self-start shrink-0">
+                                    ${badgeIcon}
+                                </div>
+                            </div>
+
+                            <!-- So sánh lựa chọn của HS và đáp án chuẩn -->
+                            <div class="pl-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
+                                <span class="text-slate-600">
+                                    Em chọn: <strong class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">${userLabel}</strong>
+                                </span>
+                                <span class="text-slate-600">
+                                    Đáp án đúng: <strong class="text-blue-700">${correctLabel}</strong>
+                                </span>
+                            </div>
+
+                            <!-- Giải thích chi tiết -->
+                            <div class="ml-8 p-3 rounded-xl bg-white/90 border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed chemical">
+                                <strong class="text-indigo-700">Giải thích:</strong> ${stmt.explanation}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                statementsReviewHTML += `</div>`;
+
+                if (qCorrectCount === 4) fullCorrectQuestions++;
+                const qScore = calculateQuestionScore(qCorrectCount);
+                totalScore += qScore;
+
+                detailLinesForExport.push(`Câu ${q.id} (${qCorrectCount}/4 ý - ${qScore.toFixed(2)}đ): ${stmtExportArr.join(" | ")}`);
+
+                // Card kết quả cho từng câu
+                const qCard = document.createElement("div");
+                qCard.className = "bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden";
+                qCard.innerHTML = `
+                    <div class="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+                        <p class="font-bold text-slate-900 text-sm sm:text-base flex-1 chemical">${q.stem}</p>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold shrink-0 ${qCorrectCount === 4 ? 'bg-emerald-100 text-emerald-800' : (qCorrectCount >= 2 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')}">
+                            Đúng ${qCorrectCount}/4 ý (+${qScore.toFixed(3).replace(/\.?0+$/, '')}đ)
+                        </span>
+                    </div>
+                    ${statementsReviewHTML}
+                `;
+                reviewContainer.appendChild(qCard);
+            });
+
+            // Làm tròn điểm hệ 10 đến 2 chữ số thập phân
+            const formattedScore = totalScore.toFixed(2).replace(".", ",");
+            const timeUsedStr = formatTime(elapsedSeconds);
+            const now = new Date();
+            const timestampStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} ngày ${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+
+            // Nhận xét xếp loại
+            let feedbackText = "Cần ôn tập thêm kiến thức về gang, thép và hợp kim nhé!";
+            if (totalScore >= 9) feedbackText = "Xuất sắc! Em nắm rất vững kiến thức về hợp kim và luyện kim!";
+            else if (totalScore >= 7.5) feedbackText = "Rất tốt! Em đã hiểu rõ phần lớn các tính chất và ứng dụng của hợp kim.";
+            else if (totalScore >= 5) feedbackText = "Đạt yêu cầu! Hãy xem kỹ phần giải thích bên dưới để tránh nhầm lẫn nhé.";
+
+            // Cập nhật UI Bảng kết quả
+            document.getElementById("res-student-title").textContent = `${studentInfo.name} — Lớp ${studentInfo.className}`;
+            document.getElementById("res-feedback-badge").textContent = feedbackText;
+            document.getElementById("res-score").textContent = formattedScore;
+            document.getElementById("res-correct-items").textContent = totalCorrectItems;
+            document.getElementById("res-full-questions").textContent = `Đúng trọn vẹn ${fullCorrectQuestions}/8 câu`;
+            document.getElementById("res-time").textContent = timeUsedStr;
+            document.getElementById("res-timestamp").textContent = `Nộp lúc ${timestampStr}`;
+
+            // Tạo nội dung văn bản tổng hợp để gửi giáo viên
+            lastSummaryText = [
+                `PHIẾU KẾT QUẢ BÀI KIỂM TRA KHTN (TRẮC NGHIỆM ĐÚNG/SAI)`,
+                `Chủ đề: Hợp kim của sắt, nhôm và kim loại trong đời sống`,
+                `--------------------------------------------------`,
+                `Họ và tên: ${studentInfo.name}`,
+                `Lớp: ${studentInfo.className}`,
+                `Điểm số: ${formattedScore} / 10 điểm`,
+                `Số ý đúng: ${totalCorrectItems} / 32 ý (Trọn vẹn ${fullCorrectQuestions}/8 câu)`,
+                `Thời gian làm bài: ${timeUsedStr}`,
+                `Thời điểm nộp bài: ${timestampStr}`,
+                `--------------------------------------------------`,
+                `CHI TIẾT TỪNG CÂU:`,
+                ...detailLinesForExport
+            ].join("\n");
+
+            // Chuyển sang màn hình kết quả
+            quizScreen.classList.add("hidden");
+            headerStatus.classList.add("hidden");
+            headerStatus.classList.remove("flex");
+            resultScreen.classList.remove("hidden");
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /**
+         * Sao chép kết quả vào Clipboard (dùng document.execCommand để tương thích mọi môi trường iframe)
+         */
+        document.getElementById("copy-result-btn").addEventListener("click", () => {
+            if (!lastSummaryText) return;
+            const textarea = document.createElement("textarea");
+            textarea.value = lastSummaryText;
+            textarea.style.position = "fixed";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                const successful = document.execCommand("copy");
+                if (successful) {
+                    showToast("Đã sao chép kết quả! Em có thể dán (Ctrl+V / Dán) gửi cho thầy/cô.", "success");
+                } else {
+                    showToast("Không thể tự động sao chép, em hãy dùng nút Tải phiếu kết quả nhé!", "warning");
+                }
+            } catch (err) {
+                showToast("Trình duyệt hạn chế sao chép, em hãy nhấn Tải phiếu kết quả (.txt).", "warning");
+            }
+            document.body.removeChild(textarea);
+        });
+
+        /**
+         * Tải phiếu kết quả dưới dạng file .txt
+         */
+        document.getElementById("download-result-btn").addEventListener("click", () => {
+            if (!lastSummaryText) return;
+            const blob = new Blob([lastSummaryText], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const safeName = studentInfo.name.replace(/\s+/g, "_");
+            a.href = url;
+            a.download = `KetQua_KHTN_${safeName}_${studentInfo.className}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Đã tải xuống phiếu kết quả!", "success");
+        });
+
+        /**
+         * Nút làm lại bài từ đầu
+         */
+        document.getElementById("retry-quiz-btn").addEventListener("click", () => {
+            clearInterval(timerInterval);
+            userAnswers = {};
+            isSubmitted = false;
+            resultScreen.classList.add("hidden");
+            quizScreen.classList.add("hidden");
+            headerStatus.classList.add("hidden");
+            headerStatus.classList.remove("flex");
+            startScreen.classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+    </script>
+</body>
+</html>
